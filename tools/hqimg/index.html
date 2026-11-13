@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <title>Image Search Pro — Google画像検索</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #121a2d;
+      --panel-2: #18233a;
+      --panel-3: #202d46;
+      --text: #edf2fb;
+      --muted: #9eacc3;
+      --line: rgba(180, 198, 226, .15);
+      --accent: #8b9cff;
+      --accent-2: #6ee7d2;
+      --danger: #ff9c9c;
+      --shadow: 0 18px 55px rgba(0,0,0,.28);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(900px 500px at 10% -10%, rgba(102,126,234,.18), transparent 60%),
+        radial-gradient(700px 450px at 100% 0%, rgba(70,205,190,.10), transparent 58%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .wrap { width: min(1120px, calc(100% - 36px)); margin: 0 auto; padding: 34px 0 54px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:26px; }
+    .brand { display:flex; align-items:center; gap:13px; min-width:0; }
+    .logo {
+      width:46px; height:46px; display:grid; place-items:center; flex:none;
+      border-radius:15px; color:#10172a; font-size:23px; font-weight:900;
+      background:linear-gradient(135deg,#a7b4ff,#72e6d5); box-shadow:0 8px 25px rgba(123,151,255,.22);
+    }
+    h1 { font-size: clamp(22px, 3vw, 30px); line-height:1.15; margin:0; letter-spacing:-.04em; }
+    .subtitle { color:var(--muted); font-size:13px; margin-top:5px; }
+    .top-note { color:var(--muted); font-size:12px; text-align:right; }
+    .layout { display:grid; grid-template-columns:minmax(0, 1fr) 310px; gap:20px; align-items:start; }
+    .main, .side { min-width:0; }
+    .card {
+      background:linear-gradient(180deg,rgba(24,35,58,.96),rgba(17,26,45,.96));
+      border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    }
+    .section { padding:22px; margin-bottom:17px; }
+    .section-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+    h2 { margin:0; font-size:16px; letter-spacing:-.02em; }
+    .eyebrow { color:var(--accent-2); font-size:10px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
+    .field-label { display:block; font-size:12px; font-weight:700; color:#cbd6e8; margin-bottom:8px; }
+    .search-row { display:flex; gap:10px; }
+    .input, select {
+      width:100%; min-width:0; border:1px solid var(--line); border-radius:12px;
+      color:var(--text); background:#0d1527; padding:13px 14px; outline:none;
+      transition:border-color .18s, box-shadow .18s;
+    }
+    .input:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(139,156,255,.13); }
+    .input::placeholder { color:#6f7e98; }
+    .search-input { font-size:16px; }
+    .btn {
+      border:1px solid var(--line); border-radius:12px; padding:11px 15px; color:var(--text);
+      background:var(--panel-3); font-weight:750; transition:transform .15s, filter .15s, border-color .15s;
+      white-space:nowrap;
+    }
+    .btn:hover { filter:brightness(1.12); border-color:rgba(180,198,226,.35); }
+    .btn:active { transform:translateY(1px); }
+    .btn-primary { color:#10172a; border:0; background:linear-gradient(135deg,#a9b5ff,#70e4d2); }
+    .btn-quiet { background:transparent; color:var(--muted); }
+    .btn-small { padding:7px 10px; border-radius:9px; font-size:12px; }
+    .hint { color:var(--muted); font-size:11px; margin:9px 0 0; }
+    .preset-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; }
+    .preset {
+      min-height:62px; padding:10px 8px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(8,15,29,.48); color:var(--text); text-align:center; font-weight:800;
+    }
+    .preset span { display:block; color:var(--muted); font-size:10px; font-weight:500; margin-top:2px; }
+    .preset.active { border-color:var(--accent); background:rgba(139,156,255,.15); box-shadow:inset 0 0 0 1px rgba(139,156,255,.22); }
+    .preset:hover { border-color:rgba(139,156,255,.7); }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+    .three-col { display:grid; grid-template-columns:repeat(3,1fr); gap:13px; }
+    .control { min-width:0; }
+    .control + .control { }
+    .advanced-toggle {
+      width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:0; border:0; color:var(--text); background:none; text-align:left;
+    }
+    .toggle-left { display:flex; align-items:center; gap:11px; }
+    .toggle-icon { width:34px; height:34px; display:grid; place-items:center; border-radius:11px; background:rgba(139,156,255,.13); color:var(--accent); font-size:17px; }
+    .chevron { color:var(--muted); transition:transform .2s; }
+    .advanced-toggle[aria-expanded="true"] .chevron { transform:rotate(180deg); }
+    .advanced-content { display:none; padding-top:20px; }
+    .advanced-content.open { display:block; }
+    .filter-block { padding:15px 0; border-top:1px solid var(--line); }
+    .filter-block:first-child { border-top:0; padding-top:0; }
+    .filter-title { font-size:12px; font-weight:800; margin-bottom:10px; color:#dce5f4; }
+    .choice-row { display:flex; flex-wrap:wrap; gap:8px; }
+    .choice {
+      display:inline-flex; align-items:center; gap:7px; padding:8px 11px; border-radius:10px;
+      border:1px solid var(--line); background:#0d1527; color:#c8d3e6; font-size:12px;
+      user-select:none; cursor:pointer;
+    }
+    .choice input { accent-color:var(--accent); margin:0; }
+    .choice:has(input:checked) { border-color:rgba(139,156,255,.8); background:rgba(139,156,255,.12); color:#fff; }
+    .inline-check { display:flex; align-items:center; gap:9px; color:#c8d3e6; font-size:12px; }
+    .inline-check input { accent-color:var(--accent); width:16px; height:16px; }
+    .site-row { display:flex; gap:9px; }
+    .site-row .input { flex:1; }
+    .result-card { padding:19px; }
+    .result-top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:11px; }
+    .url-box {
+      width:100%; min-height:86px; resize:vertical; color:#c5d3e8; background:#0a1222;
+      border:1px solid var(--line); border-radius:12px; padding:12px; font-size:11px; line-height:1.6;
+      overflow-wrap:anywhere;
+    }
+    .actions { display:flex; gap:9px; flex-wrap:wrap; margin-top:12px; }
+    .side-card { padding:19px; margin-bottom:16px; }
+    .side-card h3 { margin:0 0 12px; font-size:14px; }
+    .summary-list { display:grid; gap:10px; }
+    .summary-item { display:flex; justify-content:space-between; gap:12px; font-size:12px; }
+    .summary-item span:first-child { color:var(--muted); }
+    .summary-item span:last-child { text-align:right; font-weight:700; overflow-wrap:anywhere; }
+    .tip { color:var(--muted); font-size:11px; margin:0; }
+    .tip + .tip { margin-top:9px; }
+    .pill { display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; background:rgba(110,231,210,.1); color:var(--accent-2); font-size:10px; font-weight:800; }
+    .warning { color:#ffd59a; }
+    footer { color:#71809a; font-size:11px; text-align:center; margin-top:23px; }
+    .toast {
+      position:fixed; left:50%; bottom:22px; transform:translate(-50%,20px); opacity:0; pointer-events:none;
+      padding:10px 15px; border-radius:12px; background:#e8f0ff; color:#172033; font-size:12px; font-weight:800;
+      box-shadow:0 8px 30px rgba(0,0,0,.3); transition:.2s; z-index:10;
+    }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media (max-width:900px) {
+      .layout { grid-template-columns:1fr; }
+      .side { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+      .side-card { margin:0; }
+    }
+    @media (max-width:600px) {
+      .wrap { width:min(100% - 22px, 1120px); padding-top:20px; }
+      header { align-items:flex-start; margin-bottom:18px; }
+      .top-note { display:none; }
+      .section { padding:16px; border-radius:15px; }
+      .search-row { flex-direction:column; }
+      .search-row .btn { width:100%; }
+      .preset-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .two-col, .three-col { grid-template-columns:1fr; }
+      .side { grid-template-columns:1fr; }
+      .actions .btn { flex:1; }
+      .result-card { padding:15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">⌕</div>
+        <div>
+          <h1>Image Search Pro</h1>
+          <div class="subtitle">Google画像検索を、画質・条件からすばやく組み立てる</div>
+        </div>
+      </div>
+      <div class="top-note">SINGLE FILE · NETLIFY READY<br>検索はGoogle画像検索で実行します</div>
+    </header>
+
+    <div class="layout">
+      <main class="main">
+        <section class="card section">
+          <div class="section-head">
+            <div><div class="eyebrow">01 / Search</div><h2>検索キーワード</h2></div>
+            <button class="btn btn-quiet btn-small" id="resetBtn" type="button">すべてリセット</button>
+          </div>
+          <label class="field-label" for="query">何を探しますか？</label>
+          <div class="search-row">
+            <input class="input search-input" id="query" type="search" placeholder="例：landscape 4K wallpaper" autocomplete="off">
+            <button class="btn btn-primary" id="searchBtn" type="button">Googleで検索 ↗</button>
+          </div>
+          <p class="hint">日本語・英語どちらでも入力できます。検索語はそのままGoogle画像検索に渡します。</p>
+        </section>
+
+        <section class="card section">
+          <div class="section-head">
+            <div><div class="eyebrow">02 / Resolution</div><h2>最低画像サイズ</h2></div>
+            <span class="pill">メイン設定</span>
+          </div>
+          <div class="preset-grid" id="mpPresets">
+            <button class="preset" data-mp="" type="button">指定なし<span>フィルターなし</span></button>
+            <button class="preset" data-mp="2mp" type="button">2 MP<span>約200万画素</span></button>
+            <button class="preset" data-mp="4mp" type="button">4 MP<span>約400万画素</span></button>
+            <button class="preset" data-mp="6mp" type="button">6 MP<span>約600万画素</span></button>
+            <button class="preset active" data-mp="8mp" type="button">8 MP<span>約800万画素</span></button>
+            <button class="preset" data-mp="10mp" type="button">10 MP<span>約1000万画素</span></button>
+            <button class="preset" data-mp="12mp" type="button">12 MP<span>約1200万画素</span></button>
+            <button class="preset" data-mp="15mp" type="button">15 MP<span>約1500万画素</span></button>
+            <button class="preset" data-mp="20mp" type="button">20 MP<span>約2000万画素</span></button>
+            <button class="preset" data-mp="40mp" type="button">40 MP<span>約4000万画素</span></button>
+            <button class="preset" data-mp="70mp" type="button">70 MP<span>約7000万画素</span></button>
+          </div>
+          <p class="hint">Google画像検索が提供するMPサイズフィルターを利用します。MPは画像の総画素数の目安です。</p>
+        </section>
+
+        <section class="card section">
+          <button class="advanced-toggle" id="advancedToggle" type="button" aria-expanded="true" aria-controls="advancedContent">
+            <span class="toggle-left">
+              <span class="toggle-icon">⚙</span>
+              <span><span class="eyebrow">03 / Advanced</span><br><strong>高度な検索条件</strong></span>
+            </span>
+            <span class="chevron">⌄</span>
+          </button>
+          <div class="advanced-content open" id="advancedContent">
+            <div class="filter-block">
+              <div class="filter-title">アスペクト比</div>
+              <div class="choice-row" data-group="ratio">
+                <label class="choice"><input type="radio" name="ratio" value="" checked>指定なし</label>
+                <label class="choice"><input type="radio" name="ratio" value="t">縦長</label>
+                <label class="choice"><input type="radio" name="ratio" value="s">正方形</label>
+                <label class="choice"><input type="radio" name="ratio" value="w">横長</label>
+                <label class="choice"><input type="radio" name="ratio" value="xw">パノラマ</label>
+              </div>
+            </div>
+            <div class="filter-block">
+              <div class="filter-title">色・透明度</div>
+              <div class="choice-row" data-group="color">
+                <label class="choice"><input type="radio" name="color" value="" checked>指定なし</label>
+                <label class="choice"><input type="radio" name="color" value="color">フルカラー</label>
+                <label class="choice"><input type="radio" name="color" value="gray">白黒・グレー</label>
+                <label class="choice"><input type="radio" name="color" value="trans">透明背景</label>
+                <label class="choice"><input type="radio" name="color" value="red">赤系</label>
+                <label class="choice"><input type="radio" name="color" value="orange">オレンジ系</label>
+                <label class="choice"><input type="radio" name="color" value="yellow">黄色系</label>
+                <label class="choice"><input type="radio" name="color" value="green">緑系</label>
+                <label class="choice"><input type="radio" name="color" value="teal">青緑系</label>
+                <label class="choice"><input type="radio" name="color" value="blue">青系</label>
+                <label class="choice"><input type="radio" name="color" value="purple">紫系</label>
+                <label class="choice"><input type="radio" name="color" value="pink">ピンク系</label>
+                <label class="choice"><input type="radio" name="color" value="white">白系</label>
+                <label class="choice"><input type="radio" name="color" value="black">黒系</label>
+                <label class="choice"><input type="radio" name="color" value="brown">茶系</label>
+              </div>
+            </div>
+            <div class="filter-block">
+              <div class="filter-title">画像タイプ</div>
+              <div class="choice-row" data-group="type">
+                <label class="choice"><input type="radio" name="type" value="" checked>指定なし</label>
+                <label class="choice"><input type="radio" name="type" value="photo">写真</label>
+                <label class="choice"><input type="radio" name="type" value="face">顔</label>
+                <label class="choice"><input type="radio" name="type" value="clipart">クリップアート</label>
+                <label class="choice"><input type="radio" name="type" value="lineart">線画</label>
+                <label class="choice"><input type="radio" name="type" value="animated">アニメーション</label>
+              </div>
+            </div>
+            <div class="filter-block">
+              <div class="filter-title">ファイル形式</div>
+              <div class="choice-row" data-group="format">
+                <label class="choice"><input type="radio" name="format" value="" checked>指定なし</label>
+                <label class="choice"><input type="radio" name="format" value="jpg">JPG</label>
+                <label class="choice"><input type="radio" name="format" value="png">PNG</label>
+                <label class="choice"><input type="radio" name="format" value="gif">GIF</label>
+                <label class="choice"><input type="radio" name="format" value="webp">WebP</label>
+                <label class="choice"><input type="radio" name="format" value="bmp">BMP</label>
+                <label class="choice"><input type="radio" name="format" value="svg">SVG</label>
+              </div>
+            </div>
+            <div class="filter-block">
+              <div class="filter-title">期間</div>
+              <div class="choice-row" data-group="date">
+                <label class="choice"><input type="radio" name="date" value="" checked>指定なし</label>
+                <label class="choice"><input type="radio" name="date" value="d">過去24時間</label>
+                <label class="choice"><input type="radio" name="date" value="w">過去1週間</label>
+                <label class="choice"><input type="radio" name="date" value="m">過去1か月</label>
+                <label class="choice"><input type="radio" name="date" value="y">過去1年</label>
+              </div>
+              <p class="hint">期間はGoogle検索側の期間フィルターを利用します。</p>
+            </div>
+            <div class="filter-block">
+              <div class="filter-title">サイト・ドメイン指定</div>
+              <div class="site-row">
+                <input class="input" id="site" type="text" placeholder="例：unsplash.com / www.example.com" autocomplete="off">
+                <button class="btn btn-small" id="clearSite" type="button">クリア</button>
+              </div>
+              <p class="hint">入力したドメイン内の画像に絞り込みます。「https://」やパスは省略できます。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card result-card">
+          <div class="result-top">
+            <div><div class="eyebrow">04 / Generated URL</div><h2>検索URL</h2></div>
+            <span class="pill">自動生成</span>
+          </div>
+          <textarea class="url-box" id="generatedUrl" readonly aria-label="生成されたGoogle画像検索URL"></textarea>
+          <div class="actions">
+            <button class="btn btn-primary" id="openBtn" type="button">検索を開く ↗</button>
+            <button class="btn" id="copyBtn" type="button">URLをコピー</button>
+          </div>
+          <p class="hint warning" id="statusText">検索条件を変更するとURLが自動更新されます。</p>
+        </section>
+      </main>
+
+      <aside class="side">
+        <section class="card side-card">
+          <h3>現在の検索条件</h3>
+          <div class="summary-list" id="summary">
+            <div class="summary-item"><span>キーワード</span><span>未入力</span></div>
+            <div class="summary-item"><span>最低サイズ</span><span>8 MP</span></div>
+            <div class="summary-item"><span>追加条件</span><span>なし</span></div>
+          </div>
+        </section>
+        <section class="card side-card">
+          <h3>使い方・注意点</h3>
+          <p class="tip">• 条件を選ぶと検索URLがリアルタイムで生成されます。</p>
+          <p class="tip">• 複数条件はGoogleの画像検索フィルターとしてまとめて渡します。</p>
+          <p class="tip">• Google側の仕様変更や検索対象によって、条件が反映されない・結果が少なくなる場合があります。</p>
+          <p class="tip">• このページ自体は画像を取得・保存しません。検索結果はGoogleで表示します。</p>
+        </section>
+      </aside>
+    </div>
+    <footer>Image Search Pro · HTML 1ファイルで動作 · 外部ライブラリ不使用</footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const $ = (id) => document.getElementById(id);
+      const state = { mp: "8mp" };
+      const queryInput = $("query");
+      const siteInput = $("site");
+      const urlOutput = $("generatedUrl");
+      const summary = $("summary");
+      const statusText = $("statusText");
+      const toast = $("toast");
+
+      const labels = {
+        ratio: { "": "指定なし", t: "縦長", s: "正方形", w: "横長", xw: "パノラマ" },
+        color: {
+          "": "指定なし", color: "フルカラー", gray: "白黒・グレー", trans: "透明背景",
+          red: "赤系", orange: "オレンジ系", yellow: "黄色系", green: "緑系",
+          teal: "青緑系", blue: "青系", purple: "紫系", pink: "ピンク系",
+          white: "白系", black: "黒系", brown: "茶系"
+        },
+        type: { "": "指定なし", photo: "写真", face: "顔", clipart: "クリップアート", lineart: "線画", animated: "アニメーション" },
+        format: { "": "指定なし", jpg: "JPG", png: "PNG", gif: "GIF", webp: "WebP", bmp: "BMP", svg: "SVG" },
+        date: { "": "指定なし", d: "過去24時間", w: "過去1週間", m: "過去1か月", y: "過去1年" }
+      };
+
+      function getRadio(name) {
+        return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
+      }
+      function cleanDomain(value) {
+        return value.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").split(/[/?#]/)[0].trim();
+      }
+      function buildSearch() {
+        const query = queryInput.value.trim();
+        const domain = cleanDomain(siteInput.value);
+        const searchTerms = [];
+        if (query) searchTerms.push(query);
+        if (domain) searchTerms.push(`site:${domain}`);
+
+        const params = new URLSearchParams();
+        params.set("tbm", "isch");
+        if (searchTerms.length) params.set("q", searchTerms.join(" "));
+
+        const tbs = [];
+        if (state.mp) tbs.push(`isz:lt,islt:${state.mp}`);
+        const ratio = getRadio("ratio");
+        const color = getRadio("color");
+        const type = getRadio("type");
+        const format = getRadio("format");
+        const date = getRadio("date");
+
+        if (ratio) tbs.push(`iar:${ratio}`);
+        if (color) {
+          if (color === "color") tbs.push("ic:color");
+          else if (color === "gray") tbs.push("ic:gray");
+          else if (color === "trans") tbs.push("ic:trans");
+          else tbs.push(`ic:specific,isc:${color}`);
+        }
+        if (type) tbs.push(`itp:${type}`);
+        if (format) tbs.push(`ift:${format}`);
+        if (date) tbs.push(`qdr:${date}`);
+
+        if (tbs.length) params.set("tbs", tbs.join(","));
+        return { url: `https://www.google.com/search?${params.toString()}`, query, domain, ratio, color, type, format, date };
+      }
+      function renderSummary(data) {
+        const extras = [];
+        if (data.ratio) extras.push(labels.ratio[data.ratio]);
+        if (data.color) extras.push(labels.color[data.color]);
+        if (data.type) extras.push(labels.type[data.type]);
+        if (data.format) extras.push(labels.format[data.format]);
+        if (data.date) extras.push(labels.date[data.date]);
+        if (data.domain) extras.push(`site:${data.domain}`);
+        const rows = [
+          ["キーワード", data.query || "未入力"],
+          ["最低サイズ", state.mp ? state.mp.replace("mp", " MP") : "指定なし"],
+          ["追加条件", extras.length ? extras.join(" / ") : "なし"]
+        ];
+        summary.innerHTML = rows.map(([k,v]) => `<div class="summary-item"><span>${escapeHtml(k)}</span><span>${escapeHtml(v)}</span></div>`).join("");
+      }
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (ch) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
+      }
+      function update() {
+        const data = buildSearch();
+        urlOutput.value = data.url;
+        renderSummary(data);
+        statusText.textContent = data.query
+          ? "検索条件を変更するとURLが自動更新されます。"
+          : "キーワードを入力してから検索してください（条件だけでもGoogleは開けます）。";
+      }
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => toast.classList.remove("show"), 1800);
+      }
+      function openSearch() {
+        const data = buildSearch();
+        if (!data.query) {
+          queryInput.focus();
+          showToast("検索キーワードを入力してください");
+          return;
+        }
+        window.open(data.url, "_blank", "noopener,noreferrer");
+      }
+
+      document.querySelectorAll(".preset").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.mp = button.dataset.mp;
+          document.querySelectorAll(".preset").forEach((b) => b.classList.toggle("active", b === button));
+          update();
+        });
+      });
+      document.querySelectorAll('input[type="radio"]').forEach((input) => input.addEventListener("change", update));
+      queryInput.addEventListener("input", update);
+      siteInput.addEventListener("input", update);
+      $("searchBtn").addEventListener("click", openSearch);
+      $("openBtn").addEventListener("click", openSearch);
+      queryInput.addEventListener("keydown", (event) => { if (event.key === "Enter") openSearch(); });
+      $("copyBtn").addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(urlOutput.value);
+          showToast("検索URLをコピーしました");
+        } catch {
+          urlOutput.select();
+          document.execCommand("copy");
+          showToast("検索URLをコピーしました");
+        }
+      });
+      $("clearSite").addEventListener("click", () => { siteInput.value = ""; update(); });
+      $("advancedToggle").addEventListener("click", () => {
+        const button = $("advancedToggle");
+        const content = $("advancedContent");
+        const open = button.getAttribute("aria-expanded") !== "true";
+        button.setAttribute("aria-expanded", String(open));
+        content.classList.toggle("open", open);
+      });
+      $("resetBtn").addEventListener("click", () => {
+        queryInput.value = "";
+        siteInput.value = "";
+        state.mp = "8mp";
+        document.querySelectorAll('input[type="radio"]').forEach((input) => { input.checked = input.value === ""; });
+        document.querySelector('.preset[data-mp="8mp"]').classList.add("active");
+        document.querySelectorAll(".preset").forEach((b) => { if (b.dataset.mp !== "8mp") b.classList.remove("active"); });
+        update();
+        showToast("検索条件をリセットしました");
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>
